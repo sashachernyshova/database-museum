@@ -1,0 +1,108 @@
+CREATE FUNCTION time_subtype_diff(x time, y time) RETURNS float8 AS
+'SELECT EXTRACT(EPOCH FROM (x - y))' LANGUAGE sql STRICT IMMUTABLE;
+
+
+CREATE TYPE timerange AS RANGE (
+    subtype = time,
+    subtype_diff = time_subtype_diff
+);
+
+
+CREATE TYPE hall_title AS ENUM ('The Rossi Hall','The Malachite Room','The Concert Hall',
+    'The War Gallery of 1812','The St. George Hall','The Alexander Hall',
+    'Room of British Art','Pavilion Hall','The Gallery of the History of Ancient Painting',
+    'The Rubens Room','The Athena Room');
+
+
+CREATE TYPE position_title AS ENUM('Caretaker','Guide','Accountant','Restorer','Сleaner',
+    'Procurement specialist','Intern','CEO','IT-specialist');
+
+
+CREATE TYPE weekday AS ENUM ('Monday' ,'Tuesday' ,'Wednesday', 'Thursday', 'Friday',
+    'Saturday', 'Sunday');
+
+
+
+CREATE TABLE "exhibit" (
+	"id" serial PRIMARY KEY,
+	"title" varchar(255) NOT NULL ,
+	"author" varchar(100) NULL,
+	"typology" varchar(45) NOT NULL,
+	"style" varchar(45) NOT NULL,
+	"hall_id" int NOT NULL,
+	UNIQUE (title,author)
+);
+
+
+
+CREATE TABLE "hall" (
+	"id" serial PRIMARY KEY ,
+	"title" hall_title NOT NULL,
+	"number_of_stands" int NOT NULL,
+	CONSTRAINT number_of_stands_check CHECK ( number_of_stands > 0 )
+);
+
+
+
+CREATE TABLE "worker" (
+	"id" serial PRIMARY KEY,
+	"first_name" varchar(45) NOT NULL,
+	"last_name" varchar(45) NOT NULL,
+	"position_id" int NOT NULL
+);
+
+
+
+CREATE TABLE "position" (
+	"id" serial PRIMARY KEY ,
+	"title" position_title NOT NULL,
+	"salary" DECIMAL NOT NULL
+);
+
+
+
+CREATE EXTENSION btree_gist;
+CREATE TABLE "caretaker_shift" (
+	"id" serial PRIMARY KEY ,
+	"hall_id" int NOT NULL,
+	"worker_id" int NOT NULL,
+	"time_start" TIME NOT NULL,
+	"time_end" TIME NOT NULL,
+	"week_day" weekday NOT NULL,
+	EXCLUDE USING gist (hall_id WITH =, week_day WITH =, timerange(time_start, time_end) WITH &&),
+	EXCLUDE USING gist(worker_id WITH =, week_day WITH =, timerange(time_start, time_end) WITH &&)
+);
+
+
+
+CREATE TABLE "excursion_type" (
+	"id" serial PRIMARY KEY ,
+	"title" varchar(45) NOT NULL UNIQUE,
+	"cost" int NOT NULL,
+	CONSTRAINT cost_check CHECK (cost > 0)
+);
+
+
+
+CREATE TABLE "excursion" (
+	"id" serial PRIMARY KEY,
+	"excursion_type_id" int NOT NULL,
+	"datetime_start" TIMESTAMP NOT NULL,
+	"datetime_end" TIMESTAMP NOT NULL,
+	"worker_id" int NOT NULL,
+	"visitors_amount" int NOT NULL,
+	CONSTRAINT visitors_amount_check CHECK (visitors_amount > 0),
+	EXCLUDE USING gist (worker_id WITH =, tsrange(datetime_start,datetime_end) WITH &&),
+    EXCLUDE USING gist (excursion_type_id WITH =, tsrange(datetime_start,datetime_end) WITH &&)
+);
+
+
+
+CREATE TABLE "excursion_hall" (
+	"id" serial PRIMARY KEY,
+	"excursion_type_id" int NOT NULL,
+	"hall_id" int NOT NULL,
+	"order_number" int NOT NULL,
+	UNIQUE (excursion_type_id, hall_id),
+	UNIQUE  (excursion_type_id, order_number)
+);
