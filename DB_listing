@@ -413,3 +413,25 @@ INSERT INTO caretaker_shift (hall_id, worker_id, time_start, time_end, week_day)
 ('9','2','14:00','16:00','Friday'),
 ('10','8','14:00','16:00','Friday'),
 ('11','12','14:00','16:00','Friday');
+
+
+
+
+
+ALTER TABLE exhibit
+ADD FOREIGN KEY (hall_id) REFERENCES hall (id);
+
+ALTER TABLE worker
+ADD FOREIGN KEY (position_id) REFERENCES position (id);
+
+ALTER TABLE excursion_hall
+ADD FOREIGN KEY (excursion_type_id) REFERENCES excursion_type (id),
+ADD FOREIGN KEY (hall_id) REFERENCES hall (id);
+
+ALTER TABLE excursion
+ADD FOREIGN KEY (excursion_type_id) REFERENCES excursion_type (id),
+ADD FOREIGN KEY (worker_id) REFERENCES worker (id);
+
+ALTER TABLE caretaker_shift
+ADD FOREIGN KEY (hall_id) REFERENCES hall (id),
+ADD FOREIGN KEY (worker_id) REFERENCES worker (id);
