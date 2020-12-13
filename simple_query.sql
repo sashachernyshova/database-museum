@@ -1,6 +1,6 @@
 -- SIMPLE QUERIES --
 
-SELECT title, author FROM exhibit WHERE style = ‘Postimpressionism’;
+SELECT title, author FROM exhibit WHERE style = 'Postimpressionism';
 /* Shows titles and authors in Post-impressionism style */
 
 SELECT title, salary FROM position WHERE salary > 5000 ORDER BY salary DESC;
